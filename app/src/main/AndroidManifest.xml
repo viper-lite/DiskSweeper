@@ -28,7 +28,7 @@
         <activity android:name=".MainActivity" />
 
         <service
-            android:name=".FileScaService"
+            android:name=".FileScanService"
             android:exported="true" />
     </application>
 

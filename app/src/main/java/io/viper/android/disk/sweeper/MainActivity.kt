@@ -1,33 +1,14 @@
 package io.viper.android.disk.sweeper
 
+import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
-import android.os.Handler
-import android.os.Looper
 import android.view.View
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.widget.ContentLoadingProgressBar
-import java.io.File
-import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
-
-    private fun walkDir(dir: File, result: MutableMap<String, Long>) {
-        if (dir.isDirectory) {
-            dir.listFiles()?.forEach { item ->
-                walkDir(item, result)
-            }
-        } else {
-            dir.length()
-            result[dir.absolutePath] = dir.length()
-        }
-    }
-
-    private val mHandler: Handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,28 +20,6 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        Executors.newSingleThreadExecutor().submit {
-            mHandler.post { useLoading(true) }
-            val result = mutableMapOf<String, Long>()
-            walkDir(Environment.getExternalStorageDirectory(), result)
-            mHandler.post {
-                Toast.makeText(this@MainActivity, "文件解析完成", Toast.LENGTH_SHORT).show()
-            }
-            val dbHelper = DBHelper(this)
-            val dao = dbHelper.daoImpl
-            result.forEach { (key, value) ->
-                dao.create(FileRecord(key, value))
-            }
-            mHandler.post { useLoading(false) }
-        }
-    }
-
-    private fun useLoading(flag: Boolean) {
-        val loadingView = findViewById<ContentLoadingProgressBar>(R.id.loading_view)
-        if (flag) {
-            loadingView.show()
-        } else {
-            loadingView.hide()
-        }
+        startService(Intent(this, FileScanService::class.java))
     }
 }
