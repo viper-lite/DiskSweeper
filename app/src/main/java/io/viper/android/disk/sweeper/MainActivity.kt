@@ -5,6 +5,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -42,6 +43,14 @@ class MainActivity : AppCompatActivity() {
             mHandler.post { useLoading(true) }
             val result = mutableMapOf<String, Long>()
             walkDir(Environment.getExternalStorageDirectory(), result)
+            mHandler.post {
+                Toast.makeText(this@MainActivity, "文件解析完成", Toast.LENGTH_SHORT).show()
+            }
+            val dbHelper = DBHelper(this)
+            val dao = dbHelper.daoImpl
+            result.forEach { (key, value) ->
+                dao.create(FileRecord(key, value))
+            }
             mHandler.post { useLoading(false) }
         }
     }
