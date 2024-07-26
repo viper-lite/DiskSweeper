@@ -6,6 +6,7 @@ import android.os.Environment
 import android.os.IBinder
 import android.util.Log
 import java.io.File
+import java.sql.SQLException
 import java.util.concurrent.Executors
 
 class FileScanService : Service() {
@@ -30,12 +31,21 @@ class FileScanService : Service() {
         Executors.newSingleThreadExecutor().submit {
             val result = mutableMapOf<String, Long>()
             walkDir(Environment.getExternalStorageDirectory(), result)
-            val dbHelper = DBHelper(this)
-            val dao = dbHelper.daoImpl
+            Log.i("SVEN", "total size ${result.size}")
+            val objects = mutableListOf<FileRecord>()
             result.forEach { (key, value) ->
-                dao.create(FileRecord(key, value))
+                objects.add(FileRecord(key, value))
             }
-            dbHelper.close()
+            val dbHelper = DBHelper(this)
+            try {
+                Log.i("SVEN","database start")
+                val dao = dbHelper.daoImpl
+                dao.create(objects)
+                dbHelper.close()
+                Log.i("SVEN","database end")
+            } catch (e: SQLException) {
+                e.printStackTrace()
+            }
         }
 
         return START_NOT_STICKY
